@@ -23,6 +23,7 @@ License
 
 \*---------------------------------------------------------------------------*/
 
+#include "mathematicalConstants.H"
 #include "oscillatingFixedValueFvPatchField.H"
 #include "addToRunTimeSelectionTable.H"
 #include "fvPatchFieldMapper.H"
@@ -37,28 +38,23 @@ Foam::scalar Foam::oscillatingFixedValueFvPatchField<Type>::t() const
     return this->db().time().timeOutputValue();
 }
 
+template<class Type>
+Foam::scalar Foam::oscillatingFixedValueFvPatchField<Type>::oscillatingPart() const
+{
+    scalar frecuenciaAngular=(constant::mathematical::twoPi/periodo_);
+    return amplitud_*sin(frecuenciaAngular*t());
+}
+
+
 
 // * * * * * * * * * * * * * * * * Constructors  * * * * * * * * * * * * * * //
 
-template<class Type>
+template <class Type>
 Foam::oscillatingFixedValueFvPatchField<Type>::
-oscillatingFixedValueFvPatchField
-(
-    const fvPatch& p,
-    const DimensionedField<Type, volMesh>& iF
-)
-:
-    fixedValueFvPatchField<Type>(p, iF),
-    scalarData_(0.0),
-    data_(Zero),
-    fieldData_(p.size(), Zero),
-    timeVsData_(),
-    wordData_("wordDefault"),
-    labelData_(-1),
-    boolData_(false)
-{
-}
-
+    oscillatingFixedValueFvPatchField(const fvPatch &p,
+                                      const DimensionedField<Type, volMesh> &iF)
+    : fixedValueFvPatchField<Type>(p, iF), scalarData_(0.0), amplitud_(0.0),
+      periodo_(0.0), data_(Zero), valorMedio_(Zero), fieldData_(p.size(), Zero) {}
 
 template<class Type>
 Foam::oscillatingFixedValueFvPatchField<Type>::
@@ -71,12 +67,11 @@ oscillatingFixedValueFvPatchField
 :
     fixedValueFvPatchField<Type>(p, iF),
     scalarData_(dict.lookup<scalar>("scalarData")),
+    amplitud_(dict.lookup<scalar>("scalarData")),
+    periodo_(dict.lookup<scalar>("scalarData")),
     data_(dict.lookup<Type>("data")),
-    fieldData_("fieldData", dict, p.size()),
-    timeVsData_(Function1<Type>::New("timeVsData", dict)),
-    wordData_(dict.lookupOrDefault<word>("wordName", "wordDefault")),
-    labelData_(-1),
-    boolData_(false)
+    valorMedio_(dict.lookup<Type>("data")),
+    fieldData_("fieldData", dict, p.size())
 {
 
 
@@ -104,46 +99,30 @@ oscillatingFixedValueFvPatchField
 :
     fixedValueFvPatchField<Type>(ptf, p, iF, mapper),
     scalarData_(ptf.scalarData_),
+    amplitud_(ptf.scalarData_),
+    periodo_(ptf.scalarData_),
     data_(ptf.data_),
-    fieldData_(mapper(ptf.fieldData_)),
-    timeVsData_(ptf.timeVsData_, false),
-    wordData_(ptf.wordData_),
-    labelData_(-1),
-    boolData_(ptf.boolData_)
+    valorMedio_(ptf.data_),
+    fieldData_(mapper(ptf.fieldData_))
 {}
 
-
-template<class Type>
+template <class Type>
 Foam::oscillatingFixedValueFvPatchField<Type>::
-oscillatingFixedValueFvPatchField
-(
-    const oscillatingFixedValueFvPatchField<Type>& ptf,
-    const DimensionedField<Type, volMesh>& iF
-)
-:
-    fixedValueFvPatchField<Type>(ptf, iF),
-    scalarData_(ptf.scalarData_),
-    data_(ptf.data_),
-    fieldData_(ptf.fieldData_),
-    timeVsData_(ptf.timeVsData_, false),
-    wordData_(ptf.wordData_),
-    labelData_(-1),
-    boolData_(ptf.boolData_)
-{}
+    oscillatingFixedValueFvPatchField(
+        const oscillatingFixedValueFvPatchField<Type> &ptf,
+        const DimensionedField<Type, volMesh> &iF)
+        : fixedValueFvPatchField<Type>(ptf, iF), scalarData_(ptf.scalarData_), amplitud_(ptf.amplitud_),periodo_(ptf.periodo_),
+          data_(ptf.data_),valorMedio_(ptf.valorMedio_), fieldData_(ptf.fieldData_) {}
 
+// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * *
+// * //
 
-// * * * * * * * * * * * * * * * Member Functions  * * * * * * * * * * * * * //
-
-template<class Type>
-void Foam::oscillatingFixedValueFvPatchField<Type>::autoMap
-(
-    const fvPatchFieldMapper& m
-)
-{
-    fixedValueFvPatchField<Type>::autoMap(m);
-    m(fieldData_, fieldData_);
+template <class Type>
+void Foam::oscillatingFixedValueFvPatchField<Type>::autoMap(
+    const fvPatchFieldMapper &m) {
+  fixedValueFvPatchField<Type>::autoMap(m);
+  m(fieldData_, fieldData_);
 }
-
 
 template<class Type>
 void Foam::oscillatingFixedValueFvPatchField<Type>::rmap
@@ -171,9 +150,7 @@ void Foam::oscillatingFixedValueFvPatchField<Type>::updateCoeffs()
 
     fixedValueFvPatchField<Type>::operator==
     (
-        data_
-      + fieldData_
-      + scalarData_*timeVsData_->value(t())
+        valorMedio_*(1+oscillatingPart())
     );
 
 
@@ -189,10 +166,11 @@ void Foam::oscillatingFixedValueFvPatchField<Type>::write
 {
     fvPatchField<Type>::write(os);
     writeEntry(os, "scalarData", scalarData_);
+    writeEntry(os, "amplitud", amplitud_);
+    writeEntry(os, "periodo", periodo_);
     writeEntry(os, "data", data_);
+    writeEntry(os, "valorMedio", valorMedio_);
     writeEntry(os, "fieldData", fieldData_);
-    writeEntry(os, timeVsData_());
-    writeEntry(os, "wordData", wordData_);
     writeEntry(os, "value", *this);
 }
 

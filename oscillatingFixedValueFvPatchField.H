@@ -97,95 +97,63 @@ class oscillatingFixedValueFvPatchField
         //- Single valued scalar quantity, e.g. a coefficient
         scalar scalarData_;
 
+        scalar amplitud_;
+        scalar periodo_;
+
         //- Single valued Type quantity, e.g. reference pressure pRefValue_
         //  Other options include vector, tensor
         Type data_;
+
+        Type valorMedio_;
 
         //- Field of Types, typically defined across patch faces
         //  e.g. total pressure p0_.  Other options include vectorField
         Field<Type> fieldData_;
 
-        //- Type specified as a function of time for time-varying BCs
-        autoPtr<Function1<Type>> timeVsData_;
-
-        //- Word entry, e.g. pName_ for name of the pressure field on database
-        word wordData_;
-
-        //- Label, e.g. patch index, current time index
-        label labelData_;
-
-        //- Boolean for true/false, e.g. specify if flow rate is volumetric_
-        bool boolData_;
-
-
-    // Private Member Functions
+        // Private Member Functions
 
         //- Return current time
         scalar t() const;
 
+        scalar oscillatingPart() const;
 
-public:
+      public:
+        //- Runtime type information
+        TypeName("oscillatingFixedValue");
 
-    //- Runtime type information
-    TypeName("oscillatingFixedValue");
-
-
-    // Constructors
+        // Constructors
 
         //- Construct from patch and internal field
-        oscillatingFixedValueFvPatchField
-        (
-            const fvPatch&,
-            const DimensionedField<Type, volMesh>&
-        );
+        oscillatingFixedValueFvPatchField(
+            const fvPatch &, const DimensionedField<Type, volMesh> &);
 
         //- Construct from patch, internal field and dictionary
-        oscillatingFixedValueFvPatchField
-        (
-            const fvPatch&,
-            const DimensionedField<Type, volMesh>&,
-            const dictionary&
-        );
+        oscillatingFixedValueFvPatchField(
+            const fvPatch &, const DimensionedField<Type, volMesh> &,
+            const dictionary &);
 
         //- Construct by mapping given fixedValueTypeFvPatchField
         //  onto a new patch
-        oscillatingFixedValueFvPatchField
-        (
-            const oscillatingFixedValueFvPatchField<Type>&,
-            const fvPatch&,
-            const DimensionedField<Type, volMesh>&,
-            const fvPatchFieldMapper&
-        );
+        oscillatingFixedValueFvPatchField(
+            const oscillatingFixedValueFvPatchField<Type> &, const fvPatch &,
+            const DimensionedField<Type, volMesh> &,
+            const fvPatchFieldMapper &);
 
         //- Disallow copy without setting internal field reference
-        oscillatingFixedValueFvPatchField
-        (
-            const oscillatingFixedValueFvPatchField<Type>&
-        ) = delete;
+        oscillatingFixedValueFvPatchField(
+            const oscillatingFixedValueFvPatchField<Type> &) = delete;
 
         //- Copy constructor setting internal field reference
-        oscillatingFixedValueFvPatchField
-        (
-            const oscillatingFixedValueFvPatchField<Type>&,
-            const DimensionedField<Type, volMesh>&
-        );
+        oscillatingFixedValueFvPatchField(
+            const oscillatingFixedValueFvPatchField<Type> &,
+            const DimensionedField<Type, volMesh> &);
 
         //- Construct and return a clone setting internal field reference
-        virtual tmp<fvPatchField<Type>> clone
-        (
-            const DimensionedField<Type, volMesh>& iF
-        ) const
-        {
-            return tmp<fvPatchField<Type>>
-            (
-                new oscillatingFixedValueFvPatchField<Type>
-                (
-                    *this,
-                    iF
-                )
-            );
+        virtual tmp<fvPatchField<Type>>
+        clone(const DimensionedField<Type, volMesh> &iF) const {
+          return tmp<fvPatchField<Type>>(
+              new oscillatingFixedValueFvPatchField<Type>(*this, iF));
         }
-
 
     // Member Functions
 
